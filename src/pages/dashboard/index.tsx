@@ -1,11 +1,28 @@
 import { canSSRAuth } from '../../utils/canSSRAuth'
+import { useState } from 'react';
 import Head from 'next/head';
 import styles from './styles.module.scss'
 import { FiRefreshCcw } from 'react-icons/fi';
+import { setupAPIClient } from '../../services/api';
 
 import { Header } from '../../components/Header'
 
-export default function Dashboard(){
+
+type OrdersProps = {
+  id:string;
+  table:string | number;
+  status:boolean;
+  draft:boolean;
+  name:string | null;
+}
+
+interface HomeOrders {
+  orders: OrdersProps[];
+}
+
+export default function Dashboard({orders}:HomeOrders){
+
+  const [orderList,setOrderList] = useState(orders || []);
   return(
     <>
     <Head>
@@ -25,13 +42,16 @@ export default function Dashboard(){
       </div>
 
       <article className={styles.listOrders}>
-        <section className={styles.orderItem}>
+        {orderList.map(item =>(
+          <section key={item.id} className={styles.orderItem}>
           <button>
             <div className={styles.tag}>
             </div>
-            <span>Mesa 30</span>
+            <span>Mesa {item.table}</span>
           </button>
         </section>
+        ))}
+        
 
         
 
@@ -45,7 +65,15 @@ export default function Dashboard(){
 
 export const getServerSideProps = canSSRAuth(async (ctx) => {
 
+  const apiClient = setupAPIClient(ctx);
+
+  const response = apiClient.get('/orders')
+
+ // console.log(((await response).data))
+
   return {
-    props: {}
+    props: {
+      orders: (await response).data,
+    }
   }
 })
